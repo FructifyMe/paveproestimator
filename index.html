@@ -80,6 +80,12 @@
             border: 3px solid white;
             box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
         }
+        .btn {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body class="text-gray-800 p-4 sm:p-6 lg:p-8">
@@ -183,6 +189,24 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- NEW: Save & View Estimates Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md card">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Save & View Estimates</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="estimateName" class="block text-sm font-medium text-gray-700">Estimate Name</label>
+                            <input type="text" id="estimateName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., Option A - High Margin">
+                        </div>
+                        <button id="saveEstimateBtn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 btn">
+                            Save Current Estimate
+                        </button>
+                    </div>
+                    <div id="savedEstimatesList" class="mt-6 space-y-3">
+                        <!-- Saved estimates will be dynamically inserted here -->
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -197,9 +221,13 @@
             };
 
             // --- ELEMENT SELECTORS ---
-            const inputs = document.querySelectorAll('input[type="number"], input[type="range"]');
+            const allInputs = document.querySelectorAll('input[type="number"], input[type="range"]');
+            const inputIds = Array.from(allInputs).map(input => input.id);
             const grossMarginSlider = document.getElementById('grossMargin');
             const projectPriceInput = document.getElementById('projectPrice');
+            const saveEstimateBtn = document.getElementById('saveEstimateBtn');
+            const estimateNameInput = document.getElementById('estimateName');
+            const savedEstimatesList = document.getElementById('savedEstimatesList');
             const summaryValueDivs = [
                 document.getElementById('totalCost'),
                 document.getElementById('finalPrice'),
@@ -231,7 +259,7 @@
                 if (sourceOfChange === 'price') {
                     projectPrice = getValue('projectPrice');
                     grossMargin = projectPrice > 0 ? ((projectPrice - totalCost) / projectPrice) * 100 : 0;
-                    grossMarginSlider.value = grossMargin.toFixed(1);
+                    grossMarginSlider.value = grossMargin > 0 ? grossMargin.toFixed(1) : 0;
                 } else {
                     projectPrice = grossMargin < 100 ? totalCost / (1 - (grossMargin / 100)) : totalCost;
                     if (document.activeElement !== projectPriceInput) {
@@ -251,28 +279,99 @@
 
                 document.getElementById('totalCost').textContent = formatCurrency(cost);
                 document.getElementById('finalPrice').textContent = formatCurrency(price);
-                document.getElementById('grossMarginValue').textContent = `${parseFloat(margin).toFixed(1)}%`;
+                document.getElementById('grossMarginValue').textContent = `${(margin || 0).toFixed(1)}%`;
                 document.getElementById('pricePerSqYard').textContent = formatCurrency(ppSqYard);
                 
-                // Add a subtle animation to the summary values when they change
                 summaryValueDivs.forEach(div => {
                     div.classList.add('value-updated');
-                    div.addEventListener('animationend', () => {
-                        div.classList.remove('value-updated');
-                    }, { once: true });
+                    div.addEventListener('animationend', () => div.classList.remove('value-updated'), { once: true });
                 });
             }
             
+            // --- LOCAL STORAGE & SAVED ESTIMATES LOGIC ---
+            const getSavedEstimates = () => JSON.parse(localStorage.getItem('paveProEstimates')) || [];
+            const saveEstimates = (estimates) => localStorage.setItem('paveProEstimates', JSON.stringify(estimates));
+
+            function renderSavedEstimates() {
+                const estimates = getSavedEstimates();
+                savedEstimatesList.innerHTML = '';
+                if (estimates.length === 0) {
+                    savedEstimatesList.innerHTML = `<p class="text-center text-sm text-gray-500">No estimates saved yet.</p>`;
+                    return;
+                }
+                estimates.forEach((est, index) => {
+                    const estElement = document.createElement('div');
+                    estElement.className = 'p-3 bg-gray-50 rounded-lg border flex justify-between items-center';
+                    estElement.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${est.name}</p>
+                            <p class="text-sm text-gray-600">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(est.summary.finalPrice)} | ${est.summary.grossMargin.toFixed(1)}% Margin</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button data-index="${index}" class="load-btn text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">Load</button>
+                            <button data-index="${index}" class="delete-btn text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Del</button>
+                        </div>
+                    `;
+                    savedEstimatesList.appendChild(estElement);
+                });
+            }
+
+            saveEstimateBtn.addEventListener('click', () => {
+                const name = estimateNameInput.value.trim();
+                if (!name) {
+                    alert('Please enter a name for the estimate.');
+                    return;
+                }
+                const estimates = getSavedEstimates();
+                const newEstimate = {
+                    id: Date.now(),
+                    name: name,
+                    inputs: {},
+                    summary: {
+                        totalCost: parseFloat(document.getElementById('totalCost').textContent.replace(/[^0-9.-]+/g,"")),
+                        finalPrice: parseFloat(document.getElementById('finalPrice').textContent.replace(/[^0-9.-]+/g,"")),
+                        grossMargin: parseFloat(document.getElementById('grossMarginValue').textContent)
+                    }
+                };
+                inputIds.forEach(id => {
+                    if(document.getElementById(id)) newEstimate.inputs[id] = document.getElementById(id).value;
+                });
+
+                estimates.push(newEstimate);
+                saveEstimates(estimates);
+                renderSavedEstimates();
+                estimateNameInput.value = '';
+            });
+
+            savedEstimatesList.addEventListener('click', (e) => {
+                const index = e.target.dataset.index;
+                if (index === undefined) return;
+
+                let estimates = getSavedEstimates();
+                if (e.target.classList.contains('load-btn')) {
+                    const estimateToLoad = estimates[index];
+                    Object.keys(estimateToLoad.inputs).forEach(id => {
+                        if(document.getElementById(id)) document.getElementById(id).value = estimateToLoad.inputs[id];
+                    });
+                    calculateEstimate();
+                } else if (e.target.classList.contains('delete-btn')) {
+                    estimates.splice(index, 1);
+                    saveEstimates(estimates);
+                    renderSavedEstimates();
+                }
+            });
+
             // --- EVENT LISTENERS ---
-            inputs.forEach(input => {
+            allInputs.forEach(input => {
                 input.addEventListener('input', (e) => {
                     const source = e.target.id === 'projectPrice' ? 'price' : 'other';
                     calculateEstimate(source);
                 });
             });
 
-            // --- INITIAL CALCULATION ---
+            // --- INITIALIZATION ---
             calculateEstimate();
+            renderSavedEstimates();
         });
     </script>
 </body>
