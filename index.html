@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PavePro Estimator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Lighter blue-gray background */
+        }
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .header-gradient {
+            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+        }
+        .summary-value {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+        .summary-label {
+            font-size: 1rem; /* text-base */
+            color: #4b5563; /* text-gray-600 */
+        }
+
+        /* Value update animation */
+        @keyframes pulse-update {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .value-updated {
+            animation: pulse-update 0.4s ease-out;
+        }
+
+        /* Custom slider styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb; /* gray-200 */
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2563eb; /* blue-600 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+            transition: transform 0.2s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #2563eb; /* blue-600 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 p-6 rounded-lg header-gradient text-white shadow-lg">
+            <h1 class="text-3xl font-bold">PavePro Estimator</h1>
+            <p class="opacity-80 mt-1">by Fructify</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Side: Inputs -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md card">
+                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Job Inputs</h2>
+
+                <!-- Section for Core Metrics -->
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-3">Core Metrics</h3>
+                    <div class="input-group">
+                        <div>
+                            <label for="projectSquareYards" class="block text-sm font-medium text-gray-700">Project Square Yards</label>
+                            <input type="number" id="projectSquareYards" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 5000">
+                        </div>
+                        <div>
+                            <label for="asphaltTons" class="block text-sm font-medium text-gray-700">Asphalt Tons</label>
+                            <input type="number" id="asphaltTons" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 250">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section for Crew Days -->
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-3">Crew & Labor (Days)</h3>
+                    <div class="input-group">
+                        <div><label for="pavingCrewDays" class="block text-sm font-medium text-gray-700">Paving Crew</label><input type="number" id="pavingCrewDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="prepCrewDays" class="block text-sm font-medium text-gray-700">Prep Crew</label><input type="number" id="prepCrewDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="millingCrewDays" class="block text-sm font-medium text-gray-700">Milling Crew</label><input type="number" id="millingCrewDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="handCrewDays" class="block text-sm font-medium text-gray-700">Hand Crew</label><input type="number" id="handCrewDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="gradingCrewDays" class="block text-sm font-medium text-gray-700">Grading Crew</label><input type="number" id="gradingCrewDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="pulverizeDays" class="block text-sm font-medium text-gray-700">Pulverize</label><input type="number" id="pulverizeDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="nightWorkDays" class="block text-sm font-medium text-gray-700">Night Work</label><input type="number" id="nightWorkDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="infraredDays" class="block text-sm font-medium text-gray-700">Infrared</label><input type="number" id="infraredDays" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                    </div>
+                </div>
+
+                <!-- Section for Materials & Subcontractors -->
+                <div class="mb-6">
+                    <h3 class="font-medium text-gray-700 mb-3">Materials & Subcontractors</h3>
+                     <div class="input-group">
+                        <div><label for="subCTruckingHours" class="block text-sm font-medium text-gray-700">SubC Trucking (Hrs)</label><input type="number" id="subCTruckingHours" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="disposalLoads" class="block text-sm font-medium text-gray-700">Disposal Loads</label><input type="number" id="disposalLoads" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="gravelTons" class="block text-sm font-medium text-gray-700">Gravel (RAP) Tons</label><input type="number" id="gravelTons" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                    </div>
+                </div>
+
+                <!-- Section for Other Direct Costs -->
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-3">Other Direct Costs ($)</h3>
+                    <div class="input-group">
+                        <div><label for="pavementMarkings" class="block text-sm font-medium text-gray-700">Pavement Markings</label><input type="number" id="pavementMarkings" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="crackfill" class="block text-sm font-medium text-gray-700">Crackfill</label><input type="number" id="crackfill" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="sealcoat" class="block text-sm font-medium text-gray-700">Sealcoat</label><input type="number" id="sealcoat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="concrete" class="block text-sm font-medium text-gray-700">Concrete</label><input type="number" id="concrete" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                        <div><label for="travelExpenses" class="block text-sm font-medium text-gray-700">Travel Expenses</label><input type="number" id="travelExpenses" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Summary & Controls -->
+            <div class="space-y-8">
+                 <div class="bg-white p-6 rounded-lg shadow-md card">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Pricing Controls</h2>
+                     <!-- Gross Margin Slider -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center">
+                             <label for="grossMargin" class="block text-sm font-medium text-gray-700">Gross Margin</label>
+                             <span id="grossMarginValue" class="text-lg font-semibold text-blue-700">37.0%</span>
+                        </div>
+                        <input type="range" id="grossMargin" min="0" max="80" value="37" step="0.5" class="w-full mt-2">
+                    </div>
+                     <!-- Project Price Manual Input -->
+                     <div>
+                        <label for="projectPrice" class="block text-sm font-medium text-gray-700">Or, Set Project Price Directly ($)</label>
+                        <input type="number" id="projectPrice" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 220000">
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md card">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Real-Time Summary</h2>
+                    <div class="grid grid-cols-1 gap-6 text-center">
+                        <div>
+                            <div id="totalCost" class="summary-value text-red-600">$0.00</div>
+                            <div class="summary-label">Total Project Cost</div>
+                        </div>
+                        <div>
+                            <div id="finalPrice" class="summary-value text-green-600">$0.00</div>
+                            <div class="summary-label">Final Project Price</div>
+                        </div>
+                        <div>
+                             <div id="pricePerSqYard" class="summary-value text-gray-800">$0.00</div>
+                            <div class="summary-label">Price Per Square Yard</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION: Unit Costs ---
+            const unitCosts = {
+                asphalt: 75, pavingCrew: 9150, prepCrew: 3450, millingCrew: 8900,
+                handCrew: 3450, gradingCrew: 3600, subCTrucking: 125, disposal: 450,
+                gravel: 10, pulverize: 10000, nightWork: 3500, infrared: 5000,
+            };
+
+            // --- ELEMENT SELECTORS ---
+            const inputs = document.querySelectorAll('input[type="number"], input[type="range"]');
+            const grossMarginSlider = document.getElementById('grossMargin');
+            const projectPriceInput = document.getElementById('projectPrice');
+            const summaryValueDivs = [
+                document.getElementById('totalCost'),
+                document.getElementById('finalPrice'),
+                document.getElementById('pricePerSqYard')
+            ];
+
+            // --- CALCULATION LOGIC ---
+            function calculateEstimate(sourceOfChange = '') {
+                const getValue = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+                let totalCost = 0;
+                totalCost += getValue('asphaltTons') * unitCosts.asphalt;
+                totalCost += getValue('pavingCrewDays') * unitCosts.pavingCrew;
+                totalCost += getValue('prepCrewDays') * unitCosts.prepCrew;
+                totalCost += getValue('millingCrewDays') * unitCosts.millingCrew;
+                totalCost += getValue('handCrewDays') * unitCosts.handCrew;
+                totalCost += getValue('gradingCrewDays') * unitCosts.gradingCrew;
+                totalCost += getValue('subCTruckingHours') * unitCosts.subCTrucking;
+                totalCost += getValue('disposalLoads') * unitCosts.disposal;
+                totalCost += getValue('gravelTons') * unitCosts.gravel;
+                totalCost += getValue('pulverizeDays') * unitCosts.pulverize;
+                totalCost += getValue('nightWorkDays') * unitCosts.nightWork;
+                totalCost += getValue('infraredDays') * unitCosts.infrared;
+                totalCost += getValue('pavementMarkings') + getValue('crackfill') + getValue('sealcoat') + getValue('concrete') + getValue('travelExpenses');
+
+                let projectPrice = 0;
+                let grossMargin = getValue('grossMargin');
+
+                if (sourceOfChange === 'price') {
+                    projectPrice = getValue('projectPrice');
+                    grossMargin = projectPrice > 0 ? ((projectPrice - totalCost) / projectPrice) * 100 : 0;
+                    grossMarginSlider.value = grossMargin.toFixed(1);
+                } else {
+                    projectPrice = grossMargin < 100 ? totalCost / (1 - (grossMargin / 100)) : totalCost;
+                    if (document.activeElement !== projectPriceInput) {
+                        projectPriceInput.value = projectPrice > 0 ? projectPrice.toFixed(2) : '';
+                    }
+                }
+
+                const squareYards = getValue('projectSquareYards');
+                const pricePerSqYard = squareYards > 0 ? projectPrice / squareYards : 0;
+
+                updateDisplay(totalCost, projectPrice, grossMargin, pricePerSqYard);
+            }
+
+            // --- UI UPDATE LOGIC ---
+            function updateDisplay(cost, price, margin, ppSqYard) {
+                const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+
+                document.getElementById('totalCost').textContent = formatCurrency(cost);
+                document.getElementById('finalPrice').textContent = formatCurrency(price);
+                document.getElementById('grossMarginValue').textContent = `${parseFloat(margin).toFixed(1)}%`;
+                document.getElementById('pricePerSqYard').textContent = formatCurrency(ppSqYard);
+                
+                // Add a subtle animation to the summary values when they change
+                summaryValueDivs.forEach(div => {
+                    div.classList.add('value-updated');
+                    div.addEventListener('animationend', () => {
+                        div.classList.remove('value-updated');
+                    }, { once: true });
+                });
+            }
+            
+            // --- EVENT LISTENERS ---
+            inputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const source = e.target.id === 'projectPrice' ? 'price' : 'other';
+                    calculateEstimate(source);
+                });
+            });
+
+            // --- INITIAL CALCULATION ---
+            calculateEstimate();
+        });
+    </script>
+</body>
+</html>
