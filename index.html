@@ -24,7 +24,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .header-gradient {
-            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+            background: linear-gradient(90deg, #b91c1c, #ef4444);
         }
         .summary-value {
             font-size: 2.25rem; /* text-4xl */
@@ -36,7 +36,6 @@
             color: #4b5563; /* text-gray-600 */
         }
 
-        /* Value update animation */
         @keyframes pulse-update {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -46,39 +45,22 @@
             animation: pulse-update 0.4s ease-out;
         }
 
-        /* Custom slider styles */
         input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 10px;
-            background: #e5e7eb; /* gray-200 */
-            border-radius: 5px;
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 10px;
+            background: #e5e7eb; border-radius: 5px;
             outline: none;
         }
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            background: #2563eb; /* blue-600 */
-            cursor: pointer;
-            border-radius: 50%;
-            border: 3px solid white;
+            -webkit-appearance: none; appearance: none;
+            width: 24px; height: 24px;
+            background: #2563eb; cursor: pointer;
+            border-radius: 50%; border: 3px solid white;
             box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
             transition: transform 0.2s ease;
         }
         input[type="range"]::-webkit-slider-thumb:active {
             transform: scale(1.2);
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            background: #2563eb; /* blue-600 */
-            cursor: pointer;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
         }
         .btn {
             transition: background-color 0.2s ease, transform 0.2s ease;
@@ -87,12 +69,25 @@
             transform: translateY(-2px);
         }
         .input-error {
-            border-color: #ef4444; /* red-500 */
-            box-shadow: 0 0 0 2px #fecaca; /* red-200 */
+            border-color: #ef4444; box-shadow: 0 0 0 2px #fecaca;
         }
-        input:read-only {
-            background-color: #f3f4f6; /* gray-200 */
-            cursor: not-allowed;
+        input:read-only, select:disabled {
+            background-color: #f3f4f6; cursor: not-allowed; opacity: 0.6;
+        }
+
+        #estimateManagerModal { transition: opacity 0.3s ease; }
+
+        /* Toggle Switch Styles */
+        .toggle-bg:after {
+            content: '';
+            @apply absolute top-0.5 left-0.5 bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform shadow-sm;
+        }
+        input:checked + .toggle-bg:after {
+            transform: translateX(100%);
+            @apply border-white;
+        }
+        input:checked + .toggle-bg {
+            @apply bg-blue-600;
         }
     </style>
 </head>
@@ -104,11 +99,19 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Side: Inputs -->
             <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md card">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Job Inputs</h2>
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-xl font-semibold text-gray-800">Job Inputs</h2>
+                    <div class="flex items-center space-x-3">
+                         <span class="text-sm font-medium text-gray-700">Standard Mode</span>
+                         <label for="calculationMode" class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="calculationMode" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                         </label>
+                         <span class="text-sm font-medium text-gray-700">Price Per Ton Mode</span>
+                    </div>
+                </div>
 
-                <!-- Section for Core Metrics -->
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-3">Core Metrics</h3>
                     <div class="input-group">
@@ -118,18 +121,31 @@
                         </div>
                         <div>
                             <label for="asphaltDepth" class="block text-sm font-medium text-gray-700">Asphalt Depth (Inches)</label>
-                            <select id="asphaltDepth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                <!-- Options are generated by JavaScript -->
-                            </select>
+                            <select id="asphaltDepth" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></select>
+                        </div>
+                        <div id="costingModelContainer">
+                            <label for="costingModel" class="block text-sm font-medium text-gray-700">Asphalt Mix Type</label>
+                            <select id="costingModel" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"></select>
+                        </div>
+                         <div id="customPriceContainer" class="hidden">
+                            <label for="customPricePerTon" class="block text-sm font-medium text-gray-700">Custom Price Per Ton ($)</label>
+                            <input type="number" id="customPricePerTon" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" value="80">
                         </div>
                         <div>
-                            <label for="asphaltTons" class="block text-sm font-medium text-gray-700">Asphalt Tons (Calculated)</label>
+                            <label for="asphaltTons" class="block text-sm font-medium text-gray-700">Asphalt Tons</label>
                             <input type="number" id="asphaltTons" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" readonly>
                         </div>
                     </div>
+                     <div id="customPriceSliderContainer" class="hidden mt-4">
+                        <div class="flex justify-between items-center">
+                             <label for="customPriceSlider" class="block text-sm font-medium text-gray-700">Adjust Custom Price</label>
+                             <span id="customPriceValue" class="text-lg font-semibold text-blue-700">$80.00</span>
+                        </div>
+                        <input type="range" id="customPriceSlider" min="50" max="200" value="80" step="0.5" class="w-full mt-2">
+                    </div>
                 </div>
-
-                <!-- Section for Crew Days -->
+                
+                <!-- Other input sections remain the same -->
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-3">Crew & Labor (Days)</h3>
                     <div class="input-group">
@@ -144,7 +160,6 @@
                     </div>
                 </div>
 
-                <!-- Section for Materials & Subcontractors -->
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-3">Materials & Subcontractors</h3>
                      <div class="input-group">
@@ -154,7 +169,6 @@
                     </div>
                 </div>
 
-                <!-- Section for Other Direct Costs -->
                 <div>
                     <h3 class="font-medium text-gray-700 mb-3">Other Direct Costs ($)</h3>
                     <div class="input-group">
@@ -167,11 +181,9 @@
                 </div>
             </div>
 
-            <!-- Right Side: Summary & Controls -->
             <div class="space-y-8">
                  <div class="bg-white p-6 rounded-lg shadow-md card">
                     <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Pricing Controls</h2>
-                     <!-- Gross Margin Slider -->
                     <div class="mb-6">
                         <div class="flex justify-between items-center">
                              <label for="grossMargin" class="block text-sm font-medium text-gray-700">Gross Margin</label>
@@ -179,7 +191,6 @@
                         </div>
                         <input type="range" id="grossMargin" min="0" max="80" value="37" step="0.5" class="w-full mt-2">
                     </div>
-                     <!-- Project Price Manual Input -->
                      <div>
                         <label for="projectPrice" class="block text-sm font-medium text-gray-700">Or, Set Project Price Directly ($)</label>
                         <input type="number" id="projectPrice" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 220000">
@@ -204,53 +215,109 @@
                     </div>
                 </div>
                 
-                <!-- NEW: Save & View Estimates Section -->
                 <div class="bg-white p-6 rounded-lg shadow-md card">
-                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Save & View Estimates</h2>
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Save & Manage Estimates</h2>
                     <div class="space-y-4">
+                        <div>
+                            <label for="jobName" class="block text-sm font-medium text-gray-700">Job / Client Name</label>
+                            <input type="text" id="jobName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., Mike Farley">
+                        </div>
                         <div>
                             <label for="estimateName" class="block text-sm font-medium text-gray-700">Estimate Name</label>
                             <input type="text" id="estimateName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., Option A - High Margin">
                         </div>
-                        <button id="saveEstimateBtn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 btn">
-                            Save Current Estimate
+                        <div class="grid grid-cols-2 gap-4">
+                            <button id="saveEstimateBtn" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 btn">
+                                Save
+                            </button>
+                            <button id="newEstimateBtn" class="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 btn">
+                                New / Reset
+                            </button>
+                        </div>
+                        <button id="openManagerBtn" class="w-full bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 btn">
+                            Open Estimate Manager
                         </button>
-                    </div>
-                    <div id="savedEstimatesList" class="mt-6 space-y-3">
-                        <!-- Saved estimates will be dynamically inserted here -->
                     </div>
                 </div>
 
+                <div class="bg-white p-6 rounded-lg shadow-md card">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-800">Share Estimate</h2>
+                    <div class="space-y-3">
+                        <button id="generateLinkBtn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 btn">
+                            Generate Share Link for Current Estimate
+                        </button>
+                        <div class="relative hidden" id="shareLinkContainer">
+                            <input type="text" id="shareLinkInput" class="block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 pr-10 text-sm" readonly>
+                            <button id="copyLinkBtn" title="Copy to clipboard" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" /></svg>
+                            </button>
+                        </div>
+                        <p id="copyFeedback" class="text-center text-sm text-green-600 hidden font-medium">Copied to clipboard!</p>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <div id="estimateManagerModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50 opacity-0">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 class="text-2xl font-bold text-gray-800">Estimate Manager</h2>
+                <button id="closeManagerBtn" class="text-gray-500 hover:text-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </button>
+            </div>
+            <div id="managerContent" class="p-6 overflow-y-auto space-y-6"></div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIGURATION: Unit Costs ---
+            const asphaltMixCosts = {
+                'Mix_75': 75, 'Mix_76': 76, 'Mix_80': 80, 'Mix_95': 95, 'Mix_70': 70, 'Mix_100': 100, 'Mix_105': 105, 'Mix_110': 110,
+                'Mix_120': 120, 'Mix_125': 125, 'Mix_130': 130, 'Mix_140': 140, 'Mix_150': 150, 'Mix_65': 65, 'Mix_85': 85
+            };
             const unitCosts = {
-                asphalt: 75, pavingCrew: 9150, prepCrew: 3450, millingCrew: 8900,
-                handCrew: 3450, gradingCrew: 3600, subCTrucking: 125, disposal: 450,
+                pavingCrew: 9150, prepCrew: 3450, millingCrew: 8900, handCrew: 3450, gradingCrew: 3600, subCTrucking: 125, disposal: 450,
                 gravel: 10, pulverize: 10000, nightWork: 3500, infrared: 5000,
             };
 
-            // --- ELEMENT SELECTORS ---
-            const allInputs = document.querySelectorAll('input[type="number"], input[type="range"], select');
+            const allInputs = document.querySelectorAll('input[type="number"], input[type="range"], select, #calculationMode');
+            const numericInputs = document.querySelectorAll('input[type="number"]');
             const inputIds = Array.from(allInputs).map(input => input.id);
             const asphaltDepthSelect = document.getElementById('asphaltDepth');
+            const costingModelSelect = document.getElementById('costingModel');
             const asphaltTonsInput = document.getElementById('asphaltTons');
             const grossMarginSlider = document.getElementById('grossMargin');
             const projectPriceInput = document.getElementById('projectPrice');
             const saveEstimateBtn = document.getElementById('saveEstimateBtn');
+            const newEstimateBtn = document.getElementById('newEstimateBtn');
+            const jobNameInput = document.getElementById('jobName');
             const estimateNameInput = document.getElementById('estimateName');
-            const savedEstimatesList = document.getElementById('savedEstimatesList');
+            const openManagerBtn = document.getElementById('openManagerBtn');
+            const estimateManagerModal = document.getElementById('estimateManagerModal');
+            const closeManagerBtn = document.getElementById('closeManagerBtn');
+            const managerContent = document.getElementById('managerContent');
+            const generateLinkBtn = document.getElementById('generateLinkBtn');
+            const shareLinkContainer = document.getElementById('shareLinkContainer');
+            const shareLinkInput = document.getElementById('shareLinkInput');
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+            const copyFeedback = document.getElementById('copyFeedback');
             const summaryValueDivs = [
                 document.getElementById('totalCost'),
                 document.getElementById('finalPrice'),
                 document.getElementById('pricePerSqYard')
             ];
+            // New mode elements
+            const calculationModeToggle = document.getElementById('calculationMode');
+            const costingModelContainer = document.getElementById('costingModelContainer');
+            const customPriceContainer = document.getElementById('customPriceContainer');
+            const customPricePerTonInput = document.getElementById('customPricePerTon');
+            const customPriceSliderContainer = document.getElementById('customPriceSliderContainer');
+            const customPriceSlider = document.getElementById('customPriceSlider');
+            const customPriceValue = document.getElementById('customPriceValue');
 
-            // --- INITIALIZATION: Populate Asphalt Depth Dropdown ---
+
             function populateDepthOptions() {
                 for (let i = 1; i <= 8; i += 0.5) {
                     const option = document.createElement('option');
@@ -258,111 +325,110 @@
                     option.textContent = `${i.toFixed(1)} inches`;
                     asphaltDepthSelect.appendChild(option);
                 }
-                asphaltDepthSelect.value = "2.5"; // Set a common default
+                asphaltDepthSelect.value = "2.5";
             }
 
-            // --- CALCULATION LOGIC ---
+            function populateCostingModels() {
+                const sortedMixes = Object.keys(asphaltMixCosts).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+                sortedMixes.forEach(mixName => {
+                    const option = document.createElement('option');
+                    option.value = mixName;
+                    option.textContent = `${mixName.replace('_', ' ')} ($${asphaltMixCosts[mixName]}/ton)`;
+                    costingModelSelect.appendChild(option);
+                });
+            }
+
             function calculateEstimate(sourceOfChange = '') {
                 const getValue = (id) => parseFloat(document.getElementById(id).value) || 0;
                 
-                // --- UPDATED: Asphalt Tons calculation with depth ---
+                const isPricePerTonMode = calculationModeToggle.checked;
                 const squareYards = getValue('projectSquareYards');
-                const asphaltDepth = getValue('asphaltDepth');
-                const calculatedAsphaltTons = squareYards * asphaltDepth * 0.056;
-                asphaltTonsInput.value = calculatedAsphaltTons.toFixed(2);
+                let asphaltUnitCost = 0;
+                let tons = 0;
 
-                let totalCost = 0;
-                totalCost += calculatedAsphaltTons * unitCosts.asphalt; // Use the calculated value
-                totalCost += getValue('pavingCrewDays') * unitCosts.pavingCrew;
-                totalCost += getValue('prepCrewDays') * unitCosts.prepCrew;
-                totalCost += getValue('millingCrewDays') * unitCosts.millingCrew;
-                totalCost += getValue('handCrewDays') * unitCosts.handCrew;
-                totalCost += getValue('gradingCrewDays') * unitCosts.gradingCrew;
-                totalCost += getValue('subCTruckingHours') * unitCosts.subCTrucking;
-                totalCost += getValue('disposalLoads') * unitCosts.disposal;
-                totalCost += getValue('gravelTons') * unitCosts.gravel;
-                totalCost += getValue('pulverizeDays') * unitCosts.pulverize;
-                totalCost += getValue('nightWorkDays') * unitCosts.nightWork;
-                totalCost += getValue('infraredDays') * unitCosts.infrared;
-                totalCost += getValue('pavementMarkings') + getValue('crackfill') + getValue('sealcoat') + getValue('concrete') + getValue('travelExpenses');
+                if (isPricePerTonMode) {
+                    asphaltUnitCost = getValue('customPricePerTon');
+                    tons = getValue('asphaltTons');
+                } else {
+                    const asphaltDepth = getValue('asphaltDepth');
+                    const selectedMix = costingModelSelect.value;
+                    asphaltUnitCost = asphaltMixCosts[selectedMix] || 0;
+                    tons = squareYards * asphaltDepth * 0.056;
+                    asphaltTonsInput.value = tons.toFixed(2);
+                }
 
+                let subTotalCost = 0;
+                subTotalCost += tons * asphaltUnitCost;
+                subTotalCost += getValue('pavingCrewDays') * unitCosts.pavingCrew;
+                subTotalCost += getValue('prepCrewDays') * unitCosts.prepCrew;
+                subTotalCost += getValue('millingCrewDays') * unitCosts.millingCrew;
+                subTotalCost += getValue('handCrewDays') * unitCosts.handCrew;
+                subTotalCost += getValue('gradingCrewDays') * unitCosts.gradingCrew;
+                subTotalCost += getValue('subCTruckingHours') * unitCosts.subCTrucking;
+                subTotalCost += getValue('disposalLoads') * unitCosts.disposal;
+                subTotalCost += getValue('gravelTons') * unitCosts.gravel;
+                subTotalCost += getValue('pulverizeDays') * unitCosts.pulverize;
+                subTotalCost += getValue('nightWorkDays') * unitCosts.nightWork;
+                subTotalCost += getValue('infraredDays') * unitCosts.infrared;
+                subTotalCost += getValue('pavementMarkings') + getValue('crackfill') + getValue('sealcoat') + getValue('concrete');
+
+                const travelExpenses = getValue('travelExpenses');
+                const totalCost = subTotalCost + travelExpenses;
                 let projectPrice = 0;
                 let grossMargin = getValue('grossMargin');
 
                 if (sourceOfChange === 'price') {
                     projectPrice = getValue('projectPrice');
-                    grossMargin = projectPrice > 0 ? ((projectPrice - totalCost) / projectPrice) * 100 : 0;
+                    const priceBeforeTravel = projectPrice - travelExpenses;
+                    grossMargin = priceBeforeTravel > 0 ? ((priceBeforeTravel - subTotalCost) / priceBeforeTravel) * 100 : 0;
                     grossMarginSlider.value = grossMargin > 0 ? grossMargin.toFixed(1) : 0;
                 } else {
-                    projectPrice = grossMargin < 100 ? totalCost / (1 - (grossMargin / 100)) : totalCost;
+                    const priceBeforeTravel = grossMargin < 100 ? subTotalCost / (1 - (grossMargin / 100)) : subTotalCost;
+                    projectPrice = priceBeforeTravel + travelExpenses;
                     if (document.activeElement !== projectPriceInput) {
                         projectPriceInput.value = projectPrice > 0 ? projectPrice.toFixed(2) : '';
                     }
                 }
 
                 const pricePerSqYard = squareYards > 0 ? projectPrice / squareYards : 0;
-
                 updateDisplay(totalCost, projectPrice, grossMargin, pricePerSqYard);
             }
 
-            // --- UI UPDATE LOGIC ---
             function updateDisplay(cost, price, margin, ppSqYard) {
                 const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-
                 document.getElementById('totalCost').textContent = formatCurrency(cost);
                 document.getElementById('finalPrice').textContent = formatCurrency(price);
                 document.getElementById('grossMarginValue').textContent = `${(margin || 0).toFixed(1)}%`;
                 document.getElementById('pricePerSqYard').textContent = formatCurrency(ppSqYard);
-                
                 summaryValueDivs.forEach(div => {
                     div.classList.add('value-updated');
                     div.addEventListener('animationend', () => div.classList.remove('value-updated'), { once: true });
                 });
             }
             
-            // --- LOCAL STORAGE & SAVED ESTIMATES LOGIC ---
             const getSavedEstimates = () => JSON.parse(localStorage.getItem('paveProEstimates')) || [];
             const saveEstimates = (estimates) => localStorage.setItem('paveProEstimates', JSON.stringify(estimates));
 
-            function renderSavedEstimates() {
-                const estimates = getSavedEstimates();
-                savedEstimatesList.innerHTML = '';
-                if (estimates.length === 0) {
-                    savedEstimatesList.innerHTML = `<p class="text-center text-sm text-gray-500">No estimates saved yet.</p>`;
-                    return;
-                }
-                estimates.forEach((est, index) => {
-                    const estElement = document.createElement('div');
-                    estElement.className = 'p-3 bg-gray-50 rounded-lg border flex justify-between items-center';
-                    estElement.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">${est.name}</p>
-                            <p class="text-sm text-gray-600">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(est.summary.finalPrice)} | ${est.summary.grossMargin.toFixed(1)}% Margin</p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button data-index="${index}" class="load-btn text-sm bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 btn">Load</button>
-                            <button data-index="${index}" class="delete-btn text-sm bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-red-600 btn">Del</button>
-                        </div>
-                    `;
-                    savedEstimatesList.appendChild(estElement);
-                });
-            }
-
             saveEstimateBtn.addEventListener('click', () => {
-                const name = estimateNameInput.value.trim();
-                if (!name) {
-                    estimateNameInput.classList.add('input-error');
-                    estimateNameInput.placeholder = 'Please enter a name first!';
-                    setTimeout(() => {
-                        estimateNameInput.classList.remove('input-error');
-                        estimateNameInput.placeholder = 'e.g., Option A - High Margin';
-                    }, 2000);
+                const jobName = jobNameInput.value.trim();
+                const estimateName = estimateNameInput.value.trim();
+
+                if (!jobName) {
+                    jobNameInput.classList.add('input-error');
+                    setTimeout(() => jobNameInput.classList.remove('input-error'), 2000);
                     return;
                 }
+                if (!estimateName) {
+                    estimateNameInput.classList.add('input-error');
+                    setTimeout(() => estimateNameInput.classList.remove('input-error'), 2000);
+                    return;
+                }
+                
                 const estimates = getSavedEstimates();
                 const newEstimate = {
                     id: Date.now(),
-                    name: name,
+                    jobName: jobName,
+                    estimateName: estimateName,
                     inputs: {},
                     summary: {
                         totalCost: parseFloat(document.getElementById('totalCost').textContent.replace(/[^0-9.-]+/g,"")),
@@ -371,54 +437,266 @@
                     }
                 };
                 inputIds.forEach(id => {
-                    if(document.getElementById(id)) newEstimate.inputs[id] = document.getElementById(id).value;
+                    const el = document.getElementById(id);
+                    if(el) newEstimate.inputs[id] = (el.type === 'checkbox' ? el.checked : el.value);
                 });
 
                 estimates.push(newEstimate);
                 saveEstimates(estimates);
-                renderSavedEstimates();
                 estimateNameInput.value = '';
+                alert(`Estimate '${estimateName}' saved to job '${jobName}'.`);
             });
 
-            savedEstimatesList.addEventListener('click', (e) => {
-                const loadButton = e.target.closest('.load-btn');
-                const deleteButton = e.target.closest('.delete-btn');
-                
-                if (!loadButton && !deleteButton) return;
+            function toggleCalculationMode() {
+                const isPricePerTonMode = calculationModeToggle.checked;
+                asphaltDepthSelect.disabled = isPricePerTonMode;
+                costingModelContainer.classList.toggle('hidden', isPricePerTonMode);
+                customPriceContainer.classList.toggle('hidden', !isPricePerTonMode);
+                customPriceSliderContainer.classList.toggle('hidden', !isPricePerTonMode);
 
-                const button = loadButton || deleteButton;
-                const index = button.dataset.index;
+                if (isPricePerTonMode) {
+                    asphaltTonsInput.readOnly = false;
+                    asphaltTonsInput.value = ''; // Clear calculated value
+                } else {
+                    asphaltTonsInput.readOnly = true;
+                }
+                calculateEstimate();
+            }
+
+            function openEstimateManager() {
+                const estimates = getSavedEstimates();
+                const groupedEstimates = estimates.reduce((acc, est) => {
+                    (acc[est.jobName] = acc[est.jobName] || []).push(est);
+                    return acc;
+                }, {});
+
+                managerContent.innerHTML = '';
+                if (Object.keys(groupedEstimates).length === 0) {
+                    managerContent.innerHTML = `<p class="text-center text-gray-500">No estimates saved yet.</p>`;
+                } else {
+                    for (const jobName in groupedEstimates) {
+                        const group = groupedEstimates[jobName];
+                        const groupContainer = document.createElement('div');
+                        groupContainer.className = 'p-4 border rounded-lg';
+                        
+                        let estimatesHTML = group.map(est => `
+                            <div class="p-3 bg-gray-50 rounded-lg border flex justify-between items-center" data-id="${est.id}">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${est.estimateName}</p>
+                                    <p class="text-sm text-gray-600">${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(est.summary.finalPrice)} | ${est.summary.grossMargin.toFixed(1)}% Margin</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button data-id="${est.id}" title="Load this estimate" class="load-btn text-sm bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 btn">Load</button>
+                                    <button data-id="${est.id}" title="Delete this estimate" class="delete-btn text-sm bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-red-600 btn">Del</button>
+                                </div>
+                            </div>
+                        `).join('');
+
+                        groupContainer.innerHTML = `
+                            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                                <h3 class="text-xl font-bold text-gray-700">${jobName}</h3>
+                                <div class="flex items-center space-x-2">
+                                    <button data-job-name="${jobName}" class="export-group-csv-btn text-sm bg-purple-600 text-white px-3 py-1.5 rounded-md hover:bg-purple-700 btn">Export CSV</button>
+                                    <button data-job-name="${jobName}" class="export-group-txt-btn text-sm bg-gray-500 text-white px-3 py-1.5 rounded-md hover:bg-gray-600 btn">Export Text</button>
+                                </div>
+                            </div>
+                            <div class="space-y-3">${estimatesHTML}</div>
+                        `;
+                        managerContent.appendChild(groupContainer);
+                    }
+                }
+                
+                estimateManagerModal.classList.remove('hidden');
+                setTimeout(() => estimateManagerModal.classList.remove('opacity-0'), 10);
+            }
+
+            function closeEstimateManager() {
+                estimateManagerModal.classList.add('opacity-0');
+                setTimeout(() => estimateManagerModal.classList.add('hidden'), 300);
+            }
+
+            openManagerBtn.addEventListener('click', openEstimateManager);
+            closeManagerBtn.addEventListener('click', closeEstimateManager);
+
+            managerContent.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                const id = target.dataset.id;
                 let estimates = getSavedEstimates();
 
-                if (loadButton) {
-                    const estimateToLoad = estimates[index];
+                if (target.classList.contains('load-btn')) {
+                    const estimateToLoad = estimates.find(est => est.id == id);
                     if (estimateToLoad) {
-                        Object.keys(estimateToLoad.inputs).forEach(id => {
-                            const element = document.getElementById(id);
-                            if(element) element.value = estimateToLoad.inputs[id];
+                        Object.keys(estimateToLoad.inputs).forEach(inputId => {
+                            const el = document.getElementById(inputId);
+                            if(el) {
+                                if (el.type === 'checkbox') {
+                                    el.checked = estimateToLoad.inputs[inputId];
+                                } else {
+                                    el.value = estimateToLoad.inputs[inputId];
+                                }
+                            }
                         });
+                        toggleCalculationMode(); // Ensure UI reflects loaded mode
                         calculateEstimate();
+                        closeEstimateManager();
                     }
-                } else if (deleteButton) {
-                    estimates.splice(index, 1);
-                    saveEstimates(estimates);
-                    renderSavedEstimates();
+                } else if (target.classList.contains('delete-btn')) {
+                    const newEstimates = estimates.filter(est => est.id != id);
+                    saveEstimates(newEstimates);
+                    openEstimateManager();
+                } else if (target.classList.contains('export-group-csv-btn')) {
+                    exportGroupToCSV(target.dataset.jobName);
+                } else if (target.classList.contains('export-group-txt-btn')) {
+                    exportGroupToText(target.dataset.jobName);
                 }
             });
 
-            // --- EVENT LISTENERS ---
+            function exportGroupToCSV(jobName) {
+                const estimates = getSavedEstimates().filter(est => est.jobName === jobName);
+                if (estimates.length === 0) return;
+
+                const headers = ['Job Name', 'Estimate Name', 'Final Price', 'Gross Margin', 'Total Cost', ...Object.keys(estimates[0].inputs)];
+                let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n';
+
+                estimates.forEach(est => {
+                    const rowData = [
+                        `"${est.jobName}"`, `"${est.estimateName}"`, est.summary.finalPrice, est.summary.grossMargin, est.summary.totalCost,
+                        ...Object.values(est.inputs).map(val => `"${val}"`)
+                    ];
+                    csvContent += rowData.join(',') + '\n';
+                });
+
+                const link = document.createElement("a");
+                link.setAttribute("href", encodeURI(csvContent));
+                link.setAttribute("download", `${jobName}_estimates.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function exportGroupToText(jobName) {
+                const estimates = getSavedEstimates().filter(est => est.jobName === jobName);
+                if (estimates.length === 0) return;
+
+                let textContent = `Estimates for Job: ${jobName}\n\n`;
+                const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+
+                estimates.forEach((est, index) => {
+                    textContent += `--- Estimate ${index + 1}: ${est.estimateName} ---\n`;
+                    textContent += `Final Price: ${formatCurrency(est.summary.finalPrice)}\n`;
+                    textContent += `Gross Margin: ${est.summary.grossMargin.toFixed(1)}%\n`;
+                    textContent += `Total Cost: ${formatCurrency(est.summary.totalCost)}\n\n--- Inputs ---\n`;
+                    for (const [key, value] of Object.entries(est.inputs)) {
+                        textContent += `${key}: ${value}\n`;
+                    }
+                    textContent += "----------------------------------------\n\n";
+                });
+
+                const link = document.createElement("a");
+                link.setAttribute("href", encodeURI("data:text/plain;charset=utf-8," + textContent));
+                link.setAttribute("download", `${jobName}_estimates.txt`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            function generateShareLink(data) {
+                const dataToShare = data || getCurrentInputs();
+                const jsonString = JSON.stringify(dataToShare);
+                const encodedData = btoa(jsonString);
+                const shareUrl = `${window.location.href.split('#')[0]}#${encodedData}`;
+                
+                shareLinkInput.value = shareUrl;
+                shareLinkContainer.classList.remove('hidden');
+            }
+
+            function getCurrentInputs() {
+                const currentData = {};
+                inputIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) currentData[id] = (el.type === 'checkbox' ? el.checked : el.value);
+                });
+                return currentData;
+            }
+
+            function loadFromURL() {
+                try {
+                    if (window.location.hash) {
+                        const data = JSON.parse(atob(window.location.hash.substring(1)));
+                        Object.keys(data).forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                if (el.type === 'checkbox') el.checked = data[id];
+                                else el.value = data[id];
+                            }
+                        });
+                        history.pushState("", document.title, window.location.pathname + window.location.search);
+                        toggleCalculationMode(); // Ensure UI reflects loaded mode
+                    }
+                } catch (error) { console.error("Could not load data from URL:", error); }
+            }
+
+            generateLinkBtn.addEventListener('click', () => generateShareLink(null));
+
+            copyLinkBtn.addEventListener('click', () => {
+                shareLinkInput.select();
+                document.execCommand('copy');
+                copyFeedback.classList.remove('hidden');
+                setTimeout(() => copyFeedback.classList.add('hidden'), 2000);
+            });
+
+            function resetForm() {
+                numericInputs.forEach(input => {
+                    if (input.id.includes('Days') || input.id.includes('Hours') || input.id.includes('Loads') || input.id.includes('Tons') || input.id.includes('Expenses') || input.id.includes('Markings') || input.id.includes('Crackfill') || input.id.includes('Sealcoat') || input.id.includes('Concrete')) {
+                        input.value = '0';
+                    } else {
+                        input.value = '';
+                    }
+                });
+                
+                asphaltDepthSelect.value = "2.5";
+                costingModelSelect.selectedIndex = 0;
+                grossMarginSlider.value = "37";
+                jobNameInput.value = '';
+                estimateNameInput.value = '';
+                if(calculationModeToggle.checked) {
+                    calculationModeToggle.checked = false;
+                    toggleCalculationMode();
+                }
+
+                calculateEstimate();
+            }
+
+            newEstimateBtn.addEventListener('click', resetForm);
+
             allInputs.forEach(input => {
                 input.addEventListener('input', (e) => {
                     const source = e.target.id === 'projectPrice' ? 'price' : 'other';
-                    calculateEstimate(source);
+                    if(e.target.id === 'calculationMode') {
+                       toggleCalculationMode();
+                    } else if (e.target.id === 'customPriceSlider') {
+                       customPricePerTonInput.value = e.target.value;
+                       customPriceValue.textContent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(e.target.value);
+                       calculateEstimate(source);
+                    } else if (e.target.id === 'customPricePerTon') {
+                       customPriceSlider.value = e.target.value;
+                       customPriceValue.textContent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(e.target.value);
+                       calculateEstimate(source);
+                    }
+                    else {
+                        calculateEstimate(source);
+                    }
                 });
             });
 
-            // --- INITIALIZATION ---
             populateDepthOptions();
+            populateCostingModels();
+            loadFromURL();
             calculateEstimate();
-            renderSavedEstimates();
         });
     </script>
 </body>
 </html>
+
